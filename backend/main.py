@@ -1,3 +1,5 @@
+from pydantic import BaseModel, Field
+from personalization.service import personalize
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -36,3 +38,20 @@ def chat(request: ChatRequest):
         "user_message": request.message,
         "response": response
     }
+class FeedbackItem(BaseModel):
+    features: list[float] = Field(min_length=8, max_length=8)
+    liked: int = Field(ge=0, le=1)
+
+
+class PersonalizeRequest(BaseModel):
+    feedback: list[FeedbackItem]
+    candidates: list[list[float]]
+
+
+@app.post("/personalize")
+def personalize_user(request: PersonalizeRequest):
+    scores = personalize(
+        [item.model_dump() for item in request.feedback],
+        request.candidates,
+    )
+    return {"personalization_scores": scores}

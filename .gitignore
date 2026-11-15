@@ -1,8 +1,10 @@
+.venv/
 venv/
 __pycache__/
 *.py[cod]
 *.pt
 *.pth
 *.pkl
+.env
 data/
-dataset/
+datasets/
