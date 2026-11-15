@@ -1,69 +1,62 @@
+"""pytorchexample: A Flower / PyTorch app."""
 
 import torch
-
-from flwr.app import ArrayRecord, Context, MetricRecord
+from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
-from federated_app.task import ClientModel, test
+from pytorchexample.task import Net, load_centralized_dataset, test
 
-
+# Create ServerApp
 app = ServerApp()
 
 
 @app.main()
-def main(grid: Grid, context: Context):
+def main(grid: Grid, context: Context) -> None:
+    """Main entry point for the ServerApp."""
 
-    print("FEDERATED SERVER STARTED")
+    # Read run config
+    fraction_evaluate: float = context.run_config["fraction-evaluate"]
+    num_rounds: int = context.run_config["num-server-rounds"]
+    lr: float = context.run_config["learning-rate"]
 
-    
-    num_rounds = context.run_config["num-server-rounds"]
+    # Load global model
+    global_model = Net()
+    arrays = ArrayRecord(global_model.state_dict())
 
-   
-    global_model = ClientModel()
-    initial_arrays = ArrayRecord(global_model.state_dict())
+    # Initialize FedAvg strategy
+    strategy = FedAvg(fraction_evaluate=fraction_evaluate)
 
-  
-    strategy = FedAvg(fraction_evaluate=1.0)
-
-    print("FEDAVG STRATEGY INITIALIZED")
-
-    
+    # Start strategy, run FedAvg for `num_rounds`
     result = strategy.start(
         grid=grid,
-        initial_arrays=initial_arrays,
+        initial_arrays=arrays,
+        train_config=ConfigRecord({"lr": lr}),
         num_rounds=num_rounds,
         evaluate_fn=global_evaluate,
     )
 
-    
-    final_state = result.arrays.to_torch_state_dict()
-
-    torch.save(final_state, "final_model.pt")
-
-    print("GLOBAL MODEL SAVED")
-    print("FEDERATED TRAINING COMPLETED")
+    if context.run_config["save-model"]:
+        # Save final model to disk
+        print("\nSaving final model to disk...")
+        state_dict = result.arrays.to_torch_state_dict()
+        torch.save(state_dict, "final_model.pt")
 
 
-def global_evaluate(server_round: int, arrays: ArrayRecord):
+def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
+    """Evaluate model on central data."""
 
-    model = ClientModel()
+    # Load the model and initialize it with the received weights
+    model = Net()
     model.load_state_dict(arrays.to_torch_state_dict())
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.to(device)
 
-    
-    accuracies = []
+    # Load entire test set
+    test_dataloader = load_centralized_dataset()
 
-    for client_id in range(1, 4):
-        accuracy = test(model, client_id)
-        accuracies.append(accuracy)
+    # Evaluate the global model on the test set
+    test_loss, test_acc = test(model, test_dataloader, device)
 
-    avg_accuracy = sum(accuracies) / len(accuracies)
-
-    print(
-        f"Round {server_round}, "
-        f"Global Accuracy: {avg_accuracy:.4f}"
-    )
-
-    return MetricRecord({
-        "accuracy": avg_accuracy
-    })
+    # Return the evaluation metrics
+    return MetricRecord({"accuracy": test_acc, "loss": test_loss})
