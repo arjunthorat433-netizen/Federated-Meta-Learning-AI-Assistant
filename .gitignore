@@ -1,8 +1,19 @@
+# Python virtual environment
+.venv/
 venv/
+
+# Python cache
 __pycache__/
 *.py[cod]
-*.pt
-*.pth
-*.pkl
-data/
-dataset/
+
+# VS Code settings
+.vscode/
+
+# Jupyter temporary files
+.ipynb_checkpoints/
+
+# Log files
+*.log
+
+# Temporary files
+.DS_Store
