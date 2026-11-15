@@ -1,0 +1,17 @@
+FEDERATED META-LEARNING PROJECT
+FINAL INDEPENDENT TEST RESULTS
+
+Federated Learning:
+Client 1: 69.00%
+Client 2: 66.50%
+Client 3: 65.50%
+Average Accuracy: 67.00%
+
+MAML:
+Client 1: 79.00%
+Client 2: 78.50%
+Client 3: 78.00%
+Average Accuracy: 78.50%
+
+MAML Improvement: 11.50 percentage points
+Graph: accuracy_comparison.png
