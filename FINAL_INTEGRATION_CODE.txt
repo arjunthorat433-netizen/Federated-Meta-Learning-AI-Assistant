@@ -1,0 +1,78 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+import joblib
+from pathlib import Path
+from sklearn.metrics.pairwise import cosine_similarity
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+AI_MODEL_DIR = ROOT / "ai_model"
+
+sys.path.insert(0, str(AI_MODEL_DIR))
+
+from nlp_preprocessing import preprocess_text
+
+MODEL_PATH = AI_MODEL_DIR / "models" / "ai_model.pkl"
+
+model_data = joblib.load(MODEL_PATH)
+
+vectorizer = model_data["vectorizer"]
+pattern_vectors = model_data["pattern_vectors"]
+intent_tags = model_data["intent_tags"]
+
+app = FastAPI(
+    title="Federated Meta-Learning AI Assistant API"
+)
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+@app.get("/")
+def home():
+    return {
+        "message": "AI Assistant Backend is running"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "ai_model": "loaded"
+    }
+
+
+@app.post("/chat")
+def chat(request: ChatRequest):
+
+    user_input = preprocess_text(request.message)
+
+    user_vector = vectorizer.transform([user_input])
+
+    similarity = cosine_similarity(
+        user_vector,
+        pattern_vectors
+    )
+
+    best_match = similarity.argmax()
+    score = similarity[0][best_match]
+
+    if score >= 0.25:
+        predicted_intent = intent_tags[best_match]
+
+        response = (
+            f"I understood your request as: {predicted_intent}. "
+            f"Similarity score: {score:.2f}"
+        )
+    else:
+        predicted_intent = "unknown"
+        response = "Sorry, I don't understand your request yet."
+
+    return {
+        "user_message": request.message,
+        "intent": predicted_intent,
+        "similarity": round(float(score), 2),
+        "response": response
+    }

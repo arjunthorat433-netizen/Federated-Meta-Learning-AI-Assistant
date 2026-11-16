@@ -1,35 +1,52 @@
-
 {
   "intents": [
     {
       "tag": "greeting",
       "patterns": [
-        "Hello",
-        "Hi",
-        "Good morning",
-        "How are you?"
+        "hello",
+        "hi",
+        "hey",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "how are you"
       ],
-      "response": "Hello! How can I help you?"
+      "responses": [
+        "Hello! How can I help you today?",
+        "Hi! I'm your AI assistant. How can I help you?",
+        "Hello! What would you like to know?"
+      ]
     },
     {
       "tag": "reminder",
       "patterns": [
-        "Remind me to study",
-        "Set a reminder",
-        "I want a reminder",
-        "Remind me about my work"
+        "remind me",
+        "set a reminder",
+        "create a reminder",
+        "I need a reminder",
+        "reminder"
       ],
-      "response": "Sure! What should I remind you about?"
+      "responses": [
+        "Sure! I can help you organize a reminder.",
+        "Okay! Tell me what you want to remember.",
+        "Sure! What would you like me to remind you about?"
+      ]
     },
     {
       "tag": "planning",
       "patterns": [
-        "Plan my day",
-        "Make my daily schedule",
-        "Help me manage my time",
-        "Create a study timetable"
+        "help me plan",
+        "make a plan",
+        "create a plan",
+        "plan my day",
+        "planning",
+        "help me organize"
       ],
-      "response": "Sure! Let's plan your day."
+      "responses": [
+        "Sure! I can help you create a plan.",
+        "Absolutely! Let's organize your tasks step by step.",
+        "Sure! Tell me what you want to plan."
+      ]
     }
   ]
 }
